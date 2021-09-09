@@ -1,4 +1,5 @@
 <!doctype html>
+<#import "spring.ftl" as spring />
 <html lang="en">
 
 <head>
@@ -14,7 +15,7 @@
 </head>
 <body>
 <#list nodes as node>
-    <a href="https://vk.com/${node.id}">
+    <a href="<@spring.url '/vk/group/'/>${node.id}">
         <img src="${node.photo}" alt="${node.screen_name}">
         <p>${node.name}</p>
         <br>

@@ -1,10 +1,11 @@
 <!doctype html>
+<#import "spring.ftl" as spring />
 <html lang="en">
 
 <head>
-<#--    <@boot.importBootstrap />-->
-<#--    <@hf.headForHeaderAndFooter />-->
-<#--    <@form.headForInputForm />-->
+    <#--    <@boot.importBootstrap />-->
+    <#--    <@hf.headForHeaderAndFooter />-->
+    <#--    <@form.headForInputForm />-->
     <meta charset="UTF-8">
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
@@ -13,9 +14,12 @@
     <#--    <title><@spring.message 'ad' /></title>-->
 </head>
 <body>
-<label>
-    <input  name="url">
-</label>
-<button><a href="https://oauth.vk.com/authorize?client_id=7943922&display=page&redirect_uri=http://localhost:8080/vk/signIn&scope=groups,photos,offline&response_type=code&v=5.131">Авторизация VK</a></button>
+<#list albums as node>
+    <a href="<@spring.url '/vk/group/${node.group_id}/${node.id}/parse/'/>">
+        <p>${node.name}</p>
+        <p> ${node.description}</p>
+        <br>
+    </a>
+</#list>
 </body>
 </html>

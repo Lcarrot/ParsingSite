@@ -1,13 +1,14 @@
 package ru.lcarrot.parsingsite.entity;
 
+import lombok.Builder;
 import lombok.Data;
 
-import java.io.File;
-
 @Data
-public class Product {
+@Builder
+public class Album {
 
+    private String id;
     private String name;
-    private File image;
+    private String group_id;
     private String description;
 }

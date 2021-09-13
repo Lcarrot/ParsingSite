@@ -1,7 +1,6 @@
 package ru.lcarrot.parsingsite.controller.vk;
 
-import com.squareup.okhttp.Response;
-import org.springframework.security.access.prepost.PreAuthorize;
+import com.squareup.okhttp.*;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,14 +28,18 @@ public class OauthVkController {
         this.okHttpUtils = okHttpUtils;
     }
 
-    @PreAuthorize("permitAll()")
     @GetMapping("/signIn")
     public String authorize(Optional<String> code, HttpSession httpSession) throws IOException {
         if (code.isPresent()) {
             URL url = vkApiUtils.getOauthURL(code.get());
-            Response oauthResponse = okHttpUtils.getResponseFromGetQuery(url);
-            User user = vkService.login(oauthResponse);
-            httpSession.setAttribute("user", user);
+            Call call = okHttpUtils.getCallFromGetQuery(url);
+            try (ResponseBody body = call.execute().body()) {
+                User user = vkService.login(body);
+                httpSession.setAttribute("user", user);
+            }
+            finally {
+                call.cancel();
+            }
         }
         return "redirect:/vk/groups";
     }

@@ -14,7 +14,7 @@ public class UserService {
     @Autowired
     private HttpSession httpSession;
 
-    public User getUser(String id) {
+    public User getUser() {
         User user = (User) httpSession.getAttribute("user");
         if (user == null) {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

@@ -1,5 +1,6 @@
 package ru.lcarrot.parsingsite.service.parse;
 
+import lombok.SneakyThrows;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -15,14 +16,14 @@ import java.util.List;
 import java.util.Objects;
 
 @Component
-public class SimaLandService implements ParseService{
+public class SimaLandService extends AbstractParseService {
 
     @Autowired
     private SimaLandItemToProductConverter productConverter;
 
-    @Override
-    public String getSiteName() {
-        return "simaland";
+
+    private SimaLandService() {
+        super("simaland");
     }
 
     @Override
@@ -37,7 +38,7 @@ public class SimaLandService implements ParseService{
 
     @Override
     public int getPageCount(Document document) {
-        return Integer.parseInt(Objects.requireNonNull(document.getElementsByClass("_338X8 _3h29A").first()).text());
+        return Integer.parseInt(Objects.requireNonNull(document.getElementsByClass("_3h29A").first()).text());
     }
 
     @Override
@@ -48,8 +49,16 @@ public class SimaLandService implements ParseService{
                 .get();
     }
 
+    @SneakyThrows
     @Override
-    public Document getNextPage(int page) {
-        return null;
+    public Document getDocumentPageByNumber(String url, int page) {
+        int lastIndex;
+        if (url.contains("?")) {
+            lastIndex = url.lastIndexOf("?");
+        }
+        else {
+            lastIndex = url.length() - 1;
+        }
+        return getDocumentPageFromSite(url.substring(0, lastIndex).concat("p" + page));
     }
 }

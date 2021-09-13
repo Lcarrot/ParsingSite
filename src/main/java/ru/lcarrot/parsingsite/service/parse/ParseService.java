@@ -16,5 +16,5 @@ public interface ParseService {
 
     Document getDocumentPageFromSite(String url) throws IOException;
 
-    Document getNextPage(int page);
+    Document getDocumentPageByNumber(String url, int page);
 }

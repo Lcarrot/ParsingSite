@@ -1,7 +1,8 @@
 package ru.lcarrot.parsingsite.controller.vk;
 
+import com.squareup.okhttp.Call;
 import com.squareup.okhttp.Response;
-import org.springframework.security.access.prepost.PreAuthorize;
+import com.squareup.okhttp.ResponseBody;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,7 +18,6 @@ import ru.lcarrot.parsingsite.util.VkApiUtils;
 
 import java.io.IOException;
 import java.net.URL;
-import java.security.Principal;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 
@@ -37,27 +37,27 @@ public class GroupsVkController {
         this.okHttpUtils = okHttpUtils;
     }
 
-    private final String GROUPS_GET_METHOD_NAME = "groups.get";
-    @PreAuthorize("isAuthenticated()")
     @GetMapping
-    public String groups(Model model, boolean reload, Principal principal) throws IOException {
+    public String groups(Model model, boolean reload) throws IOException {
         List<Group> nodes;
-        User user = userService.getUser(principal.getName());
+        User user = userService.getUser();
         if (user.getGroupList() != null && !reload) {
             nodes = user.getGroupList();
-        }
-        else {
-            URL httpUrl = vkApiUtils.getUrlForMethod(GROUPS_GET_METHOD_NAME, vkApiUtils.setGroupMap(user));
-            Response getGroupsResponse = okHttpUtils.getResponseFromGetQuery(httpUrl);
-            nodes = vkService.getGroups(getGroupsResponse, user);
-            user.setGroupList(nodes);
+        } else {
+            URL url = vkApiUtils.getGroupUrl(user);
+            Call call = okHttpUtils.getCallFromGetQuery(url);
+            try (ResponseBody getGroupsResponse = call.execute().body()) {
+                nodes = vkService.getGroups(getGroupsResponse, user);
+                user.setGroupList(nodes);
+            } finally {
+                call.cancel();
+            }
         }
         model.addAttribute("nodes", nodes);
         return "groups";
     }
 
     // TODO: 06.09.2021 создать страницу для выбора
-    @PreAuthorize("isAuthenticated()")
     @GetMapping("{group_id}")
     public String createOrChooseAlbum(@PathVariable("group_id") String group_id, Model model) {
         model.addAttribute("group_id", group_id);

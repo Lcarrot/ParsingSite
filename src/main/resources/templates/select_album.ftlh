@@ -15,7 +15,7 @@
 </head>
 <body>
 <#list albums as node>
-    <a href="<@spring.url '/vk/group/${node.group_id}/${node.id}/parse/'/>">
+    <a href="<@spring.url '/vk/group/${node.group_id}/album/${node.id}/parse/'/>">
         <p>${node.name}</p>
         <p> ${node.description}</p>
         <br>

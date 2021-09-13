@@ -11,7 +11,6 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.core.userdetails.UserDetailsService;
 
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Autowired
@@ -24,11 +23,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.formLogin()
-                .loginPage("/signIn")
+                .loginPage("/signIn").permitAll()
                 .usernameParameter("id")
                 .passwordParameter("access_token")
                 .defaultSuccessUrl("/groups")
-                .failureUrl("/signIn?error");
+                .failureUrl("/signIn?error")
+                .and().csrf().disable().authorizeRequests().
+                antMatchers("/vk/signIn").permitAll()
+                .antMatchers("/vk/**").authenticated();
 //                .and()
 //                .logout()
 //                .logoutRequestMatcher(new AntPathRequestMatcher("/logout", "POST"))
@@ -44,7 +46,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     @Override
-    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+    protected void configure(AuthenticationManagerBuilder auth) {
         auth.authenticationProvider(httpSessionProvider);
     }
 }

@@ -2,9 +2,9 @@
 <html lang="en">
 
 <head>
-<#--    <@boot.importBootstrap />-->
-<#--    <@hf.headForHeaderAndFooter />-->
-<#--    <@form.headForInputForm />-->
+    <#--    <@boot.importBootstrap />-->
+    <#--    <@hf.headForHeaderAndFooter />-->
+    <#--    <@form.headForInputForm />-->
     <meta charset="UTF-8">
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
@@ -13,9 +13,12 @@
     <#--    <title><@spring.message 'ad' /></title>-->
 </head>
 <body>
-<label>
-    <input  name="url">
-</label>
-<button><a href="https://oauth.vk.com/authorize?client_id=7943922&display=page&redirect_uri=http://localhost:8080/vk/signIn&scope=groups,photos,offline&response_type=code&v=5.131">Авторизация VK</a></button>
+<form method="post">
+    <label>
+        <input name="url">
+    </label>
+    <input type="hidden" value="simaland" name="site">
+    <button type="submit"> Отправить</button>
+</form>
 </body>
 </html>

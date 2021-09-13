@@ -15,7 +15,7 @@
 </head>
 <body>
 <#list nodes as node>
-    <a href="<@spring.url '/vk/group/'/>${node.id}">
+    <a href="<@spring.url '/vk/groups/'/>${node.id}">
         <img src="${node.photo}" alt="${node.screen_name}">
         <p>${node.name}</p>
         <br>

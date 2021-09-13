@@ -1,19 +1,17 @@
 package ru.lcarrot.parsingsite.util;
 
-import com.squareup.okhttp.HttpUrl;
-import com.squareup.okhttp.MediaType;
-import com.squareup.okhttp.RequestBody;
-import com.squareup.okhttp.Response;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.squareup.okhttp.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import ru.lcarrot.parsingsite.entity.Album;
-import ru.lcarrot.parsingsite.entity.UploadToServer;
+import ru.lcarrot.parsingsite.dto.UploadToServer;
 import ru.lcarrot.parsingsite.entity.User;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
 
 @Component
 public class VkApiUtils {
@@ -29,13 +27,8 @@ public class VkApiUtils {
 
     private final String vk_version = "5.131";
 
-    public URL getUrlForMethod(final String method, Map<String, String> parameters) {
-        HttpUrl.Builder httpUrl = getBaseUrlMethod().addPathSegment(method);
-        for (Map.Entry<String, String> parameter : parameters.entrySet()) {
-            httpUrl.addQueryParameter(parameter.getKey(), parameter.getValue());
-        }
-        return httpUrl.addQueryParameter("v", vk_version).build().url();
-    }
+    @Autowired
+    private ObjectMapper objectMapper;
 
     public URL getOauthURL(final String code) {
         return new HttpUrl.Builder()
@@ -48,67 +41,77 @@ public class VkApiUtils {
                 .addQueryParameter("code", code).build().url();
     }
 
-    private HttpUrl.Builder getBaseUrlMethod() {
+    private HttpUrl.Builder getBaseUrlMethod(final String methodName) {
         return new HttpUrl.Builder()
                 .scheme("https")
                 .host("api.vk.com")
-                .addPathSegment("method");
+                .addPathSegment("method")
+                .addPathSegment(methodName)
+                .addQueryParameter("v", vk_version);
     }
 
-    public Map<String, String> setGroupMap(final User user) {
-        Map<String, String> parameters = new HashMap<>();
-        parameters.put("user_id", user.getId());
-        parameters.put("access_token", user.getAccess_token());
-        parameters.put("filter", "admin");
-        parameters.put("bool", "1");
-        return parameters;
+    public URL getGroupUrl(final User user) {
+        return getBaseUrlMethod("groups.get").
+                addQueryParameter("user_id", user.getId()).
+                addQueryParameter("access_token", user.getAccess_token()).
+                addQueryParameter("filter", "admin").
+                addQueryParameter("bool", "1").build().url();
     }
 
-    public Map<String, String> createAlbumMap(final User user, final Album album) {
-        Map<String, String> parameters = new HashMap<>();
-        parameters.put("access_token", user.getAccess_token());
-        parameters.put("title", album.getName());
-        parameters.put("group_id", album.getGroup_id());
-        parameters.put("description", album.getDescription());
-        parameters.put("upload_by_admins_only", "1");
-        return parameters;
+    public URL createAlbumUrl(final User user, final Album album) {
+        String methodName = "photos.createAlbum";
+        return getBaseUrlMethod(methodName).
+                addQueryParameter("access_token", user.getAccess_token()).
+                addQueryParameter("title", album.getName()).
+                addQueryParameter("group_id", album.getGroup_id()).
+                addQueryParameter("description", album.getDescription()).
+                addQueryParameter("upload_by_admins_only", "1").build().url();
     }
 
-    public Map<String, String> selectAlbumMap(final User user, final String group_id) {
-        Map<String, String> parameters = new HashMap<>();
-        parameters.put("access_token", user.getAccess_token());
-        parameters.put("owner_id", group_id);
-        parameters.put("need_covers", "1");
-        return parameters;
+    public URL getAlbumUrl(final User user, final String group_id) {
+        String methodName = "photos.getAlbums";
+        return getBaseUrlMethod(methodName)
+                .addQueryParameter("access_token", user.getAccess_token())
+                .addQueryParameter("owner_id", "-" + group_id)
+                .addQueryParameter("need_covers", "1").build().url();
     }
 
-    public Map<String, String> setValueForGroupIdMap(final String group_id, final User user) {
-        Map<String, String> parameters = new HashMap<>();
-        parameters.put("access_token", user.getAccess_token());
-        parameters.put("group_id", group_id);
-        return parameters;
+    public URL setValueForGroupIdMap(final String group_id, final User user) {
+        return getBaseUrlMethod("groups.getById").
+                addQueryParameter("access_token", user.getAccess_token()).
+                addQueryParameter("group_id", group_id).build().url();
     }
 
-    public Map<String, String> getUploadUrlMap(final User user, final String group_id, final String album_id) {
-        Map<String, String> map = new HashMap<>();
-        map.put("access_token", user.getAccess_token());
-        map.put("album_id", album_id);
-        map.put("group_id", group_id);
-        return map;
+    public URL getUploadServerUrl(final User user, final String group_id, final String album_id) {
+        String methodName = "photos.getUploadServer";
+        return getBaseUrlMethod(methodName).
+                addQueryParameter("access_token", user.getAccess_token()).
+                addQueryParameter("album_id", album_id).
+                addQueryParameter("group_id", group_id).build().url();
     }
 
-    public RequestBody requestBodyForUploadServer(File file) {
-        return RequestBody.create(MediaType.parse(file.getName()), file);
+    public RequestBody requestBodyForUploadServer(File file, String album_id, String group_id) {
+        return new MultipartBuilder()
+                .type(MultipartBuilder.FORM)
+                .addFormDataPart("file", file.getName(), RequestBody.create(MediaType.parse("image/png"), file))
+                .addFormDataPart("album_id", album_id)
+                .addFormDataPart("group_id", group_id)
+                .build();
     }
 
-    public Map<String, String> getSavePhotoMap(UploadToServer upload) {
-        Map<String, String> map = new HashMap<>();
-        map.put("access_token", upload.getAccess_token());
-        map.put("album_id", upload.getAlbum_id());
-        map.put("group_id", upload.getGroup_id());
-        map.put("server", upload.getServer());
-        map.put("photos_list", upload.getPhotos_list());
-        map.put("hash", upload.getHash());
-        return map;
+    public URL getSavePhotoUrl(UploadToServer upload) {
+        String methodName = "photos.save";
+        return getBaseUrlMethod(methodName).
+                addQueryParameter("access_token", upload.getAccess_token()).
+                addQueryParameter("album_id", upload.getAlbum_id()).
+                addQueryParameter("group_id", upload.getGroup_id()).
+                addQueryParameter("server", upload.getServer()).
+                addQueryParameter("photos_list", upload.getPhotos_list()).
+                addQueryParameter("hash", upload.getHash())
+                .addQueryParameter("caption", upload.getDescription()).build().url();
+    }
+
+    public String getUploadUrl(ResponseBody response) throws IOException {
+        return objectMapper.readTree(response.string()).get("response").get("upload_url").asText();
     }
 }

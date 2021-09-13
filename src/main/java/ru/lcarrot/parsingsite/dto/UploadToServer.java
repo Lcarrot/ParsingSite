@@ -1,4 +1,4 @@
-package ru.lcarrot.parsingsite.entity;
+package ru.lcarrot.parsingsite.dto;
 
 import lombok.Builder;
 import lombok.Data;
@@ -13,4 +13,5 @@ public class UploadToServer {
     private String server;
     private String photos_list;
     private String hash;
+    private String description;
 }

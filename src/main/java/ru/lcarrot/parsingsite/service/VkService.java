@@ -1,15 +1,15 @@
 package ru.lcarrot.parsingsite.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
+import com.squareup.okhttp.*;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import ru.lcarrot.parsingsite.dto.SavePhoto;
+import ru.lcarrot.parsingsite.dto.UploadToServer;
 import ru.lcarrot.parsingsite.entity.*;
 import ru.lcarrot.parsingsite.security.authentication.TokenAuthentication;
+import ru.lcarrot.parsingsite.util.JsonUtils;
 import ru.lcarrot.parsingsite.util.OkHttpUtils;
 import ru.lcarrot.parsingsite.util.VkApiUtils;
 
@@ -22,29 +22,26 @@ import java.util.stream.StreamSupport;
 @Component
 public class VkService {
 
-    private final ObjectMapper objectMapper;
     private final VkApiUtils vkApiUtils;
     private final OkHttpUtils okHttpUtils;
     private final ConversionService conversionService;
+    private final JsonUtils jsonUtils;
 
-    public VkService(ObjectMapper objectMapper, VkApiUtils vkApiUtils, OkHttpUtils okHttpUtils, ConversionService conversionService) {
-        this.objectMapper = objectMapper;
+    public VkService(VkApiUtils vkApiUtils, OkHttpUtils okHttpUtils, ConversionService conversionService, JsonUtils jsonUtils) {
         this.vkApiUtils = vkApiUtils;
         this.okHttpUtils = okHttpUtils;
         this.conversionService = conversionService;
+        this.jsonUtils = jsonUtils;
     }
 
-    public User login(Response response) throws IOException {
-        JsonNode jsonNode = objectMapper.readTree(response.body().string());
-        String id = jsonNode.get("user_id").asText();
-        String access_token = jsonNode.get("access_token").asText();
-        User user = User.builder().id(id).access_token(access_token).build();
+    public User login(ResponseBody response) throws IOException {
+        User user = conversionService.convert(jsonUtils.get(response), User.class);
         SecurityContextHolder.getContext().setAuthentication(new TokenAuthentication(user, true));
         return user;
     }
 
-    public List<Group> getGroups(Response response, User user) throws IOException {
-        JsonNode jsonNode = objectMapper.readTree(response.body().string()).get("response");
+    public List<Group> getGroups(ResponseBody response, User user) throws IOException {
+        JsonNode jsonNode = jsonUtils.get(response, "response");
         int count = jsonNode.get("count").asInt();
         List<Group> groupList;
         if (count > 100_000) {
@@ -65,12 +62,12 @@ public class VkService {
     }
 
     private Group getGroupById(String groupId, User user) {
-        URL url = vkApiUtils.getUrlForMethod("groups.getById", vkApiUtils.setValueForGroupIdMap(groupId, user));
+        URL url = vkApiUtils.setValueForGroupIdMap(groupId, user);
         Request request = new Request.Builder().url(url).build();
         Group group;
         try {
             Response response = new OkHttpClient().newCall(request).execute();
-            JsonNode node = objectMapper.readTree(response.body().string()).get("response").elements().next();
+            JsonNode node = jsonUtils.get(response.body(), "response").elements().next();
             group = conversionService.convert(node, Group.class);
         } catch (IOException e) {
             throw new RuntimeException("can't parse a group");
@@ -78,13 +75,13 @@ public class VkService {
         return group;
     }
 
-    public Album getAlbum(Response response) throws IOException {
-        JsonNode node = objectMapper.readTree(response.body().string()).get("response");
+    public Album getAlbum(ResponseBody response) throws IOException {
+        JsonNode node = jsonUtils.get(response, "response");
         return conversionService.convert(node, Album.class);
     }
 
-    public List<Album> getAlbums(Response response) throws IOException {
-        JsonNode node = objectMapper.readTree(response.body().string()).get("response");
+    public List<Album> getAlbums(ResponseBody response) throws IOException {
+        JsonNode node = jsonUtils.get(response, "response");
         int count = node.get("count").asInt();
         List<Album> albumList;
         if (count > 100_000) {
@@ -104,20 +101,21 @@ public class VkService {
         return albumList;
     }
 
-    //todo: загружать фото на сервер и выгружать в альбом
-    public void savePhotoInAlbum(Product product,String upload_url, User user) throws IOException {
-        Response response = okHttpUtils
-                .getResponseFromPostQuery(new URL(upload_url),
-                        vkApiUtils.requestBodyForUploadServer(product.getImage()));
-        JsonNode node = objectMapper.readTree(response.body().string());
-        UploadToServer upload = conversionService.convert(node, UploadToServer.class);
-        assert upload != null;
-        upload.setAccess_token(user.getAccess_token());
-        okHttpUtils.getResponseFromGetQuery(vkApiUtils
-                .getUrlForMethod("photos.save",vkApiUtils.getSavePhotoMap(upload)));
-    }
-
-    public String getUploadUrl(Response response) throws IOException {
-        return objectMapper.readTree(response.body().string()).get("response").get("upload_url").asText();
+    public void savePhotoInAlbum(final SavePhoto savePhoto) throws IOException {
+        Call call1 = okHttpUtils.getResponseFromPostQuery(new URL(savePhoto.getUpload_url()),
+                        vkApiUtils.requestBodyForUploadServer(savePhoto.getProduct().getImage(),savePhoto.getAlbum_id(), savePhoto.getGroup_id()));
+        try (ResponseBody responseBody = call1.execute().body()){
+            JsonNode node = jsonUtils.get(responseBody);
+            UploadToServer upload = conversionService.convert(node, UploadToServer.class);
+            assert upload != null;
+            upload.setDescription(savePhoto.getProduct().getDescription());
+            upload.setAccess_token(savePhoto.getUser_access_token());
+            Call call = okHttpUtils.getCallFromGetQuery(vkApiUtils.getSavePhotoUrl(upload));
+            ResponseBody body = call.execute().body();
+            System.out.println(body.string());
+            body.close();
+            call.cancel();
+            savePhoto.getProduct().getImage().delete();
+        }
     }
 }

@@ -11,6 +11,6 @@
 </head>
 <body>
 <a href="<@spring.url '/vk/group/${group_id}/album/create'/>"><button>Создать</button></a>
-<a href="<@spring.url '/vk/group/${group_id}/albums'/>"><button>Выбрать</button></a>
+<a href="<@spring.url '/vk/group/${group_id}/album/albums'/>"><button>Выбрать</button></a>
 </body>
 </html>

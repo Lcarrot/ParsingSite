@@ -1,7 +1,6 @@
 package ru.lcarrot.parsingsite.controller.vk;
 
 import com.squareup.okhttp.Call;
-import com.squareup.okhttp.Response;
 import com.squareup.okhttp.ResponseBody;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;

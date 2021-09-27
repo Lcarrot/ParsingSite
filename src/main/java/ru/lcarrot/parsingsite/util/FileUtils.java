@@ -2,19 +2,22 @@ package ru.lcarrot.parsingsite.util;
 
 import org.springframework.stereotype.Component;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.URL;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
 
 @Component
 public class FileUtils {
 
     public void downloadFromInternet(File file, URL url) throws IOException {
-        OutputStream outputStream = new FileOutputStream(file);
-        InputStream inputStream = url.openStream();
-        byte[] bytes = new byte[1024];
-        int byteRead;
-        while ((byteRead = inputStream.read(bytes, 0, 1024)) != -1) {
-            outputStream.write(bytes, 0, byteRead);
+        ReadableByteChannel rbc = Channels.newChannel(url.openStream());
+        FileOutputStream fos = new FileOutputStream(file);
+        long transfer_bytes = Long.MAX_VALUE;
+        while (transfer_bytes == Long.MAX_VALUE) {
+            transfer_bytes = fos.getChannel().transferFrom(rbc, fos.getChannel().position(), Long.MAX_VALUE);
         }
     }
 }

@@ -1,9 +1,11 @@
 package ru.lcarrot.parsingsite.util;
 
-import com.squareup.okhttp.*;
+import com.squareup.okhttp.Call;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
 import java.net.URL;
 
 @Component

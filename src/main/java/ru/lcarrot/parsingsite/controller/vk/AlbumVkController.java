@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 
 @Controller
 @RequestMapping("/vk/group/{group_id}/album")

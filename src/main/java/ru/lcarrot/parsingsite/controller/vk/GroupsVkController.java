@@ -1,7 +1,5 @@
 package ru.lcarrot.parsingsite.controller.vk;
 
-import com.squareup.okhttp.Call;
-import com.squareup.okhttp.ResponseBody;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,45 +9,28 @@ import ru.lcarrot.parsingsite.entity.Group;
 import ru.lcarrot.parsingsite.entity.User;
 import ru.lcarrot.parsingsite.service.UserService;
 import ru.lcarrot.parsingsite.service.VkService;
-import ru.lcarrot.parsingsite.service.parse.ParseServiceManager;
-import ru.lcarrot.parsingsite.util.OkHttpUtils;
-import ru.lcarrot.parsingsite.util.VkApiUtils;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 
 @Controller
 @RequestMapping("/vk/groups")
 public class GroupsVkController {
 
-    private final VkApiUtils vkApiUtils;
     private final VkService vkService;
     private final UserService userService;
 
-    public GroupsVkController(VkApiUtils vkApiUtils, VkService vkService, ParseServiceManager manager, ExecutorService executorService, UserService userService) {
-        this.vkApiUtils = vkApiUtils;
+    public GroupsVkController(VkService vkService, UserService userService) {
         this.vkService = vkService;
         this.userService = userService;
     }
 
     @GetMapping
-    public String groups(Model model, boolean reload) throws IOException {
+    public String groups(Model model) throws IOException {
         List<Group> nodes;
         User user = userService.getUser();
-        if (user.getGroupList() != null && !reload) {
-            nodes = user.getGroupList();
-        } else {
-            URL url = vkApiUtils.getGroupUrl(user);
-            Call call = OkHttpUtils.getCallFromGetQuery(url);
-            try (ResponseBody getGroupsResponse = call.execute().body()) {
-                nodes = vkService.getGroups(getGroupsResponse, user);
-                user.setGroupList(nodes);
-            } finally {
-                call.cancel();
-            }
-        }
+        nodes = vkService.getGroups(user);
+        user.setGroupList(nodes);
         model.addAttribute("nodes", nodes);
         return "groups";
     }

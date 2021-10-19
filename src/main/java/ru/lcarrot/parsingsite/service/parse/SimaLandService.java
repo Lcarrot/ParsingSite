@@ -5,7 +5,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
-import ru.lcarrot.parsingsite.converters.SimaLandItemToProductConverter;
+import ru.lcarrot.parsingsite.converters.SimaLandHtmlToProductConverter;
 import ru.lcarrot.parsingsite.entity.Product;
 
 import java.util.ArrayList;
@@ -16,19 +16,17 @@ import static ru.lcarrot.parsingsite.util.HtmParseUtils.getDocumentPageFromSite;
 @Component
 public class SimaLandService implements ParseService {
 
-    private final SimaLandItemToProductConverter productConverter;
+    private final SimaLandHtmlToProductConverter productConverter;
 
 
 
-    public SimaLandService(SimaLandItemToProductConverter productConverter) {
+    public SimaLandService(SimaLandHtmlToProductConverter productConverter) {
         this.productConverter = productConverter;
     }
 
-    private final String name = "simaland";
-
     @Override
     public String getSiteName() {
-        return name;
+        return "simaland";
     }
 
     @Override

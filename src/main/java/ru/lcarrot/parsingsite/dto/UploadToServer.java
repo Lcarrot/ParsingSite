@@ -14,4 +14,5 @@ public class UploadToServer {
     private String photos_list;
     private String hash;
     private String description;
+    private String folderName;
 }

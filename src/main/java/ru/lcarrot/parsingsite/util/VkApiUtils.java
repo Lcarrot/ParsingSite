@@ -107,8 +107,8 @@ public class VkApiUtils {
                 addQueryParameter("group_id", upload.getGroup_id()).
                 addQueryParameter("server", upload.getServer()).
                 addQueryParameter("photos_list", upload.getPhotos_list()).
-                addQueryParameter("hash", upload.getHash())
-                .addQueryParameter("caption", upload.getDescription()).build().url();
+                addQueryParameter("hash", upload.getHash()).
+                addQueryParameter("caption", upload.getDescription()).build().url();
     }
 
     public String getUploadUrl(ResponseBody response) throws IOException {

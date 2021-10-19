@@ -1,20 +1,27 @@
 package ru.lcarrot.parsingsite.service.parse;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class ParseServiceManager {
 
-    @Autowired
-    private List<ParseService> parseServices;
+    private final List<ParseService> parseServices;
+
+    public ParseServiceManager(List<ParseService> parseServices) {
+        this.parseServices = parseServices;
+    }
 
     public ParseService getParseServiceByName(String name) {
-        for (ParseService service: parseServices) {
-            if (service.getSiteName().equals(name)) return service;
-        }
-        throw new IllegalStateException(name + " service can't find");
+        return parseServices.stream()
+                .filter(service -> service.getSiteName().equals(name))
+                .findAny()
+                .orElseThrow(() -> new IllegalStateException(name + " service can't find"));
+    }
+
+    public List<String> getAllServices() {
+        return parseServices.stream().map(ParseService::getSiteName).collect(Collectors.toList());
     }
 }

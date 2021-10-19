@@ -15,9 +15,15 @@
 <body>
 <form method="post">
     <label>
-        <input name="url">
+        <input name="url" placeholder="enter url">
     </label>
-    <input type="hidden" value="simaland" name="site">
+    <label>
+        <select name="site">
+        <#list services as node>
+            <option value="${node}">${node}</option>
+        </#list>
+        </select>
+    </label>
     <button type="submit"> Отправить</button>
 </form>
 </body>

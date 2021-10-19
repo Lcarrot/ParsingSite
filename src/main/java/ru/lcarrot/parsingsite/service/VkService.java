@@ -7,10 +7,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import ru.lcarrot.parsingsite.dto.SavePhoto;
 import ru.lcarrot.parsingsite.dto.UploadToServer;
-import ru.lcarrot.parsingsite.entity.*;
+import ru.lcarrot.parsingsite.entity.Album;
+import ru.lcarrot.parsingsite.entity.Group;
+import ru.lcarrot.parsingsite.entity.User;
 import ru.lcarrot.parsingsite.security.authentication.TokenAuthentication;
 import ru.lcarrot.parsingsite.util.JsonUtils;
-import ru.lcarrot.parsingsite.util.OkHttpUtils;
 import ru.lcarrot.parsingsite.util.VkApiUtils;
 
 import java.io.IOException;
@@ -19,17 +20,18 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import static ru.lcarrot.parsingsite.util.OkHttpUtils.getCallFromGetQuery;
+import static ru.lcarrot.parsingsite.util.OkHttpUtils.getResponseFromPostQuery;
+
 @Component
 public class VkService {
 
     private final VkApiUtils vkApiUtils;
-    private final OkHttpUtils okHttpUtils;
     private final ConversionService conversionService;
     private final JsonUtils jsonUtils;
 
-    public VkService(VkApiUtils vkApiUtils, OkHttpUtils okHttpUtils, ConversionService conversionService, JsonUtils jsonUtils) {
+    public VkService(VkApiUtils vkApiUtils, ConversionService conversionService, JsonUtils jsonUtils) {
         this.vkApiUtils = vkApiUtils;
-        this.okHttpUtils = okHttpUtils;
         this.conversionService = conversionService;
         this.jsonUtils = jsonUtils;
     }
@@ -102,7 +104,7 @@ public class VkService {
     }
 
     public void savePhotoInAlbum(final SavePhoto savePhoto) throws IOException {
-        Call call1 = okHttpUtils.getResponseFromPostQuery(new URL(savePhoto.getUpload_url()),
+        Call call1 = getResponseFromPostQuery(new URL(savePhoto.getUpload_url()),
                         vkApiUtils.requestBodyForUploadServer(savePhoto.getProduct().getImage(),savePhoto.getAlbum_id(), savePhoto.getGroup_id()));
         try (ResponseBody responseBody = call1.execute().body()){
             JsonNode node = jsonUtils.get(responseBody);
@@ -110,12 +112,19 @@ public class VkService {
             assert upload != null;
             upload.setDescription(savePhoto.getProduct().getDescription());
             upload.setAccess_token(savePhoto.getUser_access_token());
-            Call call = okHttpUtils.getCallFromGetQuery(vkApiUtils.getSavePhotoUrl(upload));
-            ResponseBody body = call.execute().body();
-            System.out.println(body.string());
-            body.close();
-            call.cancel();
-            savePhoto.getProduct().getImage().delete();
+            Call call = getCallFromGetQuery(vkApiUtils.getSavePhotoUrl(upload));
+            try (ResponseBody body = call.execute().body()) {
+                System.out.println(body.string());
+                body.close();
+                call.cancel();
+                savePhoto.getProduct().getImage().delete();
+            }
+            finally {
+                call.cancel();
+            }
+        }
+        finally {
+            call1.cancel();
         }
     }
 }

@@ -1,29 +1,34 @@
 package ru.lcarrot.parsingsite.service.parse;
 
 import lombok.SneakyThrows;
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.lcarrot.parsingsite.converters.SimaLandItemToProductConverter;
 import ru.lcarrot.parsingsite.entity.Product;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+
+import static ru.lcarrot.parsingsite.util.HtmParseUtils.getDocumentPageFromSite;
 
 @Component
-public class SimaLandService extends AbstractParseService {
+public class SimaLandService implements ParseService {
 
-    @Autowired
-    private SimaLandItemToProductConverter productConverter;
+    private final SimaLandItemToProductConverter productConverter;
 
 
-    private SimaLandService() {
-        super("simaland");
+
+    public SimaLandService(SimaLandItemToProductConverter productConverter) {
+        this.productConverter = productConverter;
+    }
+
+    private final String name = "simaland";
+
+    @Override
+    public String getSiteName() {
+        return name;
     }
 
     @Override
@@ -38,27 +43,24 @@ public class SimaLandService extends AbstractParseService {
 
     @Override
     public int getPageCount(Document document) {
-        return Integer.parseInt(Objects.requireNonNull(document.getElementsByClass("_3h29A").first()).text());
-    }
-
-    @Override
-    public Document getDocumentPageFromSite(String url) throws IOException {
-        return Jsoup.connect(url)
-                .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36")
-                .referrer("https://www.google.com")
-                .get();
+        return  document.getElementsByClass("_3h29A").stream()
+                .map(value -> Integer.parseInt(value.text())).findFirst().orElse(1);
     }
 
     @SneakyThrows
     @Override
     public Document getDocumentPageByNumber(String url, int page) {
         int lastIndex;
+        String filters = null;
         if (url.contains("?")) {
             lastIndex = url.lastIndexOf("?");
+            filters = url.substring(lastIndex);
         }
         else {
             lastIndex = url.length() - 1;
         }
-        return getDocumentPageFromSite(url.substring(0, lastIndex).concat("p" + page));
+        String query = (url.substring(0, lastIndex).concat("p" + page)).concat("/");
+        query = (filters != null) ? query.concat(filters) : query;
+        return getDocumentPageFromSite(query);
     }
 }

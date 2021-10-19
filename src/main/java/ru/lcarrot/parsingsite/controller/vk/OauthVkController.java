@@ -20,19 +20,17 @@ public class OauthVkController {
 
     private final VkApiUtils vkApiUtils;
     private final VkService vkService;
-    private final OkHttpUtils okHttpUtils;
 
-    public OauthVkController(VkApiUtils vkApiUtils, VkService vkService, OkHttpUtils okHttpUtils) {
+    public OauthVkController(VkApiUtils vkApiUtils, VkService vkService) {
         this.vkApiUtils = vkApiUtils;
         this.vkService = vkService;
-        this.okHttpUtils = okHttpUtils;
     }
 
     @GetMapping("/signIn")
     public String authorize(Optional<String> code, HttpSession httpSession) throws IOException {
         if (code.isPresent()) {
             URL url = vkApiUtils.getOauthURL(code.get());
-            Call call = okHttpUtils.getCallFromGetQuery(url);
+            Call call = OkHttpUtils.getCallFromGetQuery(url);
             try (ResponseBody body = call.execute().body()) {
                 User user = vkService.login(body);
                 httpSession.setAttribute("user", user);

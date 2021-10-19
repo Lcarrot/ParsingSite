@@ -28,6 +28,8 @@ import java.net.URL;
 import java.util.List;
 import java.util.Optional;
 
+import static ru.lcarrot.parsingsite.util.HtmParseUtils.getDocumentPageFromSite;
+
 @Controller
 @RequestMapping("/vk/group/{group_id}/album")
 public class AlbumVkController {
@@ -36,14 +38,12 @@ public class AlbumVkController {
     private final VkService vkService;
     private final ParseServiceManager manager;
     private final UserService userService;
-    private final OkHttpUtils okHttpUtils;
 
-    public AlbumVkController(VkApiUtils vkApiUtils, VkService vkService, ParseServiceManager manager, UserService userService, OkHttpUtils okHttpUtils) {
+    public AlbumVkController(VkApiUtils vkApiUtils, VkService vkService, ParseServiceManager manager, UserService userService) {
         this.vkApiUtils = vkApiUtils;
         this.vkService = vkService;
         this.manager = manager;
         this.userService = userService;
-        this.okHttpUtils = okHttpUtils;
     }
 
     @GetMapping("/albums")
@@ -55,7 +55,7 @@ public class AlbumVkController {
             albums = group.get().getAlbums();
         } else {
             URL url = vkApiUtils.getAlbumUrl(user, group_id);
-            Call call = okHttpUtils.getCallFromGetQuery(url);
+            Call call = OkHttpUtils.getCallFromGetQuery(url);
             try (ResponseBody getAlbumsResponse = call.execute().body()) {
                 albums = vkService.getAlbums(getAlbumsResponse);
             }
@@ -77,7 +77,7 @@ public class AlbumVkController {
         album.setGroup_id(group_id);
         User user = userService.getUser();
         URL url = vkApiUtils.createAlbumUrl(user, album);
-        Call call = okHttpUtils.getCallFromGetQuery(url);
+        Call call = OkHttpUtils.getCallFromGetQuery(url);
         try (ResponseBody response = call.execute().body()) {
             album = vkService.getAlbum(response);
         }
@@ -88,7 +88,8 @@ public class AlbumVkController {
 
     // TODO: 06.09.2021 сделать страницу списка парсеров
     @GetMapping(("/{album_id}/parse"))
-    public String getSiteForParsing(@PathVariable String album_id, @PathVariable String group_id) {
+    public String getSiteForParsing(@PathVariable String album_id, @PathVariable String group_id, Model model) {
+        model.addAttribute("services", manager.getAllServices());
         return "page";
     }
 
@@ -96,7 +97,7 @@ public class AlbumVkController {
     public String chooseSiteForParsing(@PathVariable String album_id, @PathVariable String group_id, String site, String url) throws IOException {
         User user = userService.getUser();
         ParseService parseService = manager.getParseServiceByName(site);
-        Call call = okHttpUtils
+        Call call = OkHttpUtils
                 .getCallFromGetQuery(vkApiUtils
                         .getUploadServerUrl(user, group_id, album_id));
         String upload_url;
@@ -105,7 +106,7 @@ public class AlbumVkController {
         } finally {
             call.cancel();
         }
-        int count = parseService.getPageCount(parseService.getDocumentPageFromSite(url));
+        int count = parseService.getPageCount(getDocumentPageFromSite(url));
         Disposable disposable = Flowable.range(1, count)
                 .map(pageNumber -> parseService.getDocumentPageByNumber(url, pageNumber))
                 .map(parseService::getProducts).subscribe(list -> {
@@ -119,6 +120,6 @@ public class AlbumVkController {
                         .build());
             }
         });
-        return "page";
+        return "redirect:" + "/vk/group/" + group_id + "/album/" + album_id + "/parse";
     }
 }

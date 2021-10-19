@@ -27,13 +27,11 @@ public class GroupsVkController {
     private final VkApiUtils vkApiUtils;
     private final VkService vkService;
     private final UserService userService;
-    private final OkHttpUtils okHttpUtils;
 
-    public GroupsVkController(VkApiUtils vkApiUtils, VkService vkService, ParseServiceManager manager, ExecutorService executorService, UserService userService, OkHttpUtils okHttpUtils) {
+    public GroupsVkController(VkApiUtils vkApiUtils, VkService vkService, ParseServiceManager manager, ExecutorService executorService, UserService userService) {
         this.vkApiUtils = vkApiUtils;
         this.vkService = vkService;
         this.userService = userService;
-        this.okHttpUtils = okHttpUtils;
     }
 
     @GetMapping
@@ -44,7 +42,7 @@ public class GroupsVkController {
             nodes = user.getGroupList();
         } else {
             URL url = vkApiUtils.getGroupUrl(user);
-            Call call = okHttpUtils.getCallFromGetQuery(url);
+            Call call = OkHttpUtils.getCallFromGetQuery(url);
             try (ResponseBody getGroupsResponse = call.execute().body()) {
                 nodes = vkService.getGroups(getGroupsResponse, user);
                 user.setGroupList(nodes);

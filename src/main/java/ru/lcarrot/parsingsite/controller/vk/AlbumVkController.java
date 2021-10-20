@@ -73,6 +73,9 @@ public class AlbumVkController {
     @GetMapping(("/{album_id}/parse"))
     public String getSiteForParsing(@PathVariable String album_id, @PathVariable String group_id, Model model) {
         model.addAttribute("services", manager.getAllServices());
+        User user = userService.getUser();
+        user.getTasks().removeIf(CompletableFuture::isDone);
+        model.addAttribute("tasks", userService.getUser().getTasks());
         return "page";
     }
 
@@ -82,7 +85,7 @@ public class AlbumVkController {
         ParseService parseService = manager.getParseServiceByName(site);
         String upload_url = vkService.getUploadUrl(user, group_id, album_id);
         int count = parseService.getPageCount(getDocumentPageFromSite(url));
-        CompletableFuture.supplyAsync(() -> {
+        CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> {
             Disposable disposable = Flowable.range(1, count)
                     .map(pageNumber -> parseService.getDocumentPageByNumber(url, pageNumber))
                     .map(parseService::getProducts).subscribe(list -> {
@@ -98,6 +101,7 @@ public class AlbumVkController {
                     });
             return disposable.isDisposed();
         });
+        user.getTasks().add(future);
         return "redirect:" + "/vk/group/" + group_id + "/album/" + album_id + "/parse";
     }
 }

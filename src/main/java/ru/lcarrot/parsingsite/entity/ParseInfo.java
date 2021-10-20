@@ -3,6 +3,7 @@ package ru.lcarrot.parsingsite.entity;
 import lombok.Builder;
 import lombok.Data;
 
+import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -15,4 +16,5 @@ public class ParseInfo {
     private String url;
     private CompletableFuture<?> completableFuture;
     private Integer allPagesCount;
+    private Path folder;
 }

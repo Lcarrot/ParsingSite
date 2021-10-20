@@ -78,6 +78,16 @@ public class AlbumVkController {
     public String getSiteForParsing(@PathVariable String album_id, @PathVariable String group_id, Model model) {
         model.addAttribute("services", manager.getAllServices());
         User user = userService.getUser();
+        user.getTasks().forEach(task -> {
+                    if (task.getCompletableFuture().isDone()) {
+                        try {
+                            Files.delete(task.getFolder());
+                        } catch (IOException ignored) {
+                            //ignored
+                        }
+                    }
+                }
+        );
         user.getTasks().removeIf(x -> x.getCompletableFuture().isDone());
         List<ParseInfoDto> parseInfoDtoList = user.getTasks().stream().map(ParseInfoDto::to).collect(Collectors.toList());
         model.addAttribute("tasks", parseInfoDtoList);
@@ -100,7 +110,7 @@ public class AlbumVkController {
                         return parseService.getDocumentPageByNumber(url, pageNumber);
                     })
                     .map(parseService::getProducts).subscribeOn(Schedulers.computation()).subscribe(list -> {
-                        for (Product product: list) {
+                        for (Product product : list) {
                             vkService.savePhotoInAlbum(SavePhoto.builder()
                                     .album_id(album_id)
                                     .user_access_token(user.getAccess_token())
@@ -111,11 +121,6 @@ public class AlbumVkController {
                                     .build());
                         }
                     });
-            try {
-                Files.delete(folder);
-            } catch (IOException ignored) {
-                // ignored
-            }
         });
         ParseInfo parseInfo = ParseInfo.builder()
                 .completableFuture(future)
@@ -123,6 +128,7 @@ public class AlbumVkController {
                 .url(url)
                 .count(pageParsedCount)
                 .allPagesCount(count)
+                .folder(folder)
                 .build();
         user.getTasks().add(parseInfo);
         return "redirect:" + "/vk/group/" + group_id + "/album/" + album_id + "/parse";

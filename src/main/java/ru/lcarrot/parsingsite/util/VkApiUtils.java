@@ -27,9 +27,6 @@ public class VkApiUtils {
 
     private final String vk_version = "5.131";
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
     public URL getOauthURL(final String code) {
         return new HttpUrl.Builder()
                 .scheme("https")
@@ -109,9 +106,5 @@ public class VkApiUtils {
                 addQueryParameter("photos_list", upload.getPhotos_list()).
                 addQueryParameter("hash", upload.getHash()).
                 addQueryParameter("caption", upload.getDescription()).build().url();
-    }
-
-    public String getUploadUrl(ResponseBody response) throws IOException {
-        return objectMapper.readTree(response.string()).get("response").get("upload_url").asText();
     }
 }

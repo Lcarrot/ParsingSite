@@ -26,5 +26,12 @@
     </label>
     <button type="submit"> Отправить</button>
 </form>
+<#list tasks as task>
+   <p>url : ${task.url}</p>
+    <br>
+    <p>id альбома : ${task.album_id}</p>
+    <p>количество обработанных страниц : ${task.count} из ${task.allPagesCount}</p>
+    <br>
+</#list>
 </body>
 </html>

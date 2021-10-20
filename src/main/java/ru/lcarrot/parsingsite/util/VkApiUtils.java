@@ -1,16 +1,16 @@
 package ru.lcarrot.parsingsite.util;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.squareup.okhttp.*;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.squareup.okhttp.HttpUrl;
+import com.squareup.okhttp.MediaType;
+import com.squareup.okhttp.MultipartBuilder;
+import com.squareup.okhttp.RequestBody;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import ru.lcarrot.parsingsite.entity.Album;
 import ru.lcarrot.parsingsite.dto.UploadToServer;
+import ru.lcarrot.parsingsite.entity.Album;
 import ru.lcarrot.parsingsite.entity.User;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URL;
 
 @Component

@@ -4,6 +4,8 @@ import lombok.Builder;
 import lombok.Data;
 import ru.lcarrot.parsingsite.entity.Product;
 
+import java.nio.file.Path;
+
 @Data
 @Builder
 public class SavePhoto {
@@ -13,4 +15,5 @@ public class SavePhoto {
     private String upload_url;
     private String album_id;
     private String group_id;
+    private Path folder;
 }

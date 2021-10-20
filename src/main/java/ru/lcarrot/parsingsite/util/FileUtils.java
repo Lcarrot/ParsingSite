@@ -15,18 +15,19 @@ import java.util.concurrent.ThreadLocalRandom;
 public class FileUtils {
 
     public static void downloadFromInternet(File file, URL url) throws IOException {
-        ReadableByteChannel rbc = Channels.newChannel(url.openStream());
-        FileOutputStream fos = new FileOutputStream(file);
-        long transfer_bytes = Long.MAX_VALUE;
-        while (transfer_bytes == Long.MAX_VALUE) {
-            transfer_bytes = fos.getChannel().transferFrom(rbc, fos.getChannel().position(), Long.MAX_VALUE);
+        try (ReadableByteChannel rbc = Channels.newChannel(url.openStream());
+             FileOutputStream fos = new FileOutputStream(file)){
+            long transfer_bytes = Long.MAX_VALUE;
+            while (transfer_bytes == Long.MAX_VALUE) {
+                transfer_bytes = fos.getChannel().transferFrom(rbc, fos.getChannel().position(), Long.MAX_VALUE);
+            }
         }
     }
 
     @SneakyThrows
-    public static File getImageByHref(String folder, String href) {
+    public static File getImageByHref(Path folder, String href) {
         String name = String.valueOf(ThreadLocalRandom.current().nextInt());
-        Path path = Paths.get(folder, name + ".jpg");
+        Path path = Paths.get(String.valueOf(folder), name + ".jpg");
         File file = new File(String.valueOf(path));
         file.createNewFile();
         FileUtils.downloadFromInternet(file, new URL(href));

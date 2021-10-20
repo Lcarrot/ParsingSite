@@ -1,6 +1,7 @@
 package ru.lcarrot.parsingsite.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.SneakyThrows;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -15,6 +16,9 @@ import ru.lcarrot.parsingsite.util.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
@@ -92,14 +96,12 @@ public class VkService {
         }
     }
 
+    @SneakyThrows
     public void savePhotoInAlbum(final SavePhoto savePhoto) {
-        String folder = savePhoto.getGroup_id() + savePhoto.getAlbum_id();
-        File image = FileUtils.getImageByHref(folder, savePhoto.getProduct().getImageHref());
+        File image = FileUtils.getImageByHref(savePhoto.getFolder(), savePhoto.getProduct().getImageHref());
         JsonNode node = vkRepository.uploadPhotoInServer(savePhoto, image);
-        String folderName = savePhoto.getUser_access_token() + ThreadLocalRandom.current();
         UploadToServer upload = conversionService.convert(node, UploadToServer.class);
         assert upload != null;
-        upload.setFolderName(folderName);
         upload.setDescription(savePhoto.getProduct().getDescription());
         upload.setAccess_token(savePhoto.getUser_access_token());
         JsonNode node1 = vkRepository.getSavePhotoUrl(upload);

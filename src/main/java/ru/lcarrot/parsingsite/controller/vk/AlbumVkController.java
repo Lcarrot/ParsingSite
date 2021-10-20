@@ -2,6 +2,7 @@ package ru.lcarrot.parsingsite.controller.vk;
 
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,20 +10,23 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import ru.lcarrot.parsingsite.dto.AlbumDto;
+import ru.lcarrot.parsingsite.dto.ParseInfoDto;
 import ru.lcarrot.parsingsite.dto.SavePhoto;
-import ru.lcarrot.parsingsite.entity.Album;
-import ru.lcarrot.parsingsite.entity.Group;
-import ru.lcarrot.parsingsite.entity.Product;
-import ru.lcarrot.parsingsite.entity.User;
+import ru.lcarrot.parsingsite.entity.*;
 import ru.lcarrot.parsingsite.service.UserService;
 import ru.lcarrot.parsingsite.service.VkService;
 import ru.lcarrot.parsingsite.service.parse.ParseService;
 import ru.lcarrot.parsingsite.service.parse.ParseServiceManager;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import static ru.lcarrot.parsingsite.util.HtmParseUtils.getDocumentPageFromSite;
 
@@ -74,8 +78,9 @@ public class AlbumVkController {
     public String getSiteForParsing(@PathVariable String album_id, @PathVariable String group_id, Model model) {
         model.addAttribute("services", manager.getAllServices());
         User user = userService.getUser();
-        user.getTasks().removeIf(CompletableFuture::isDone);
-        model.addAttribute("tasks", userService.getUser().getTasks());
+        user.getTasks().removeIf(x -> x.getCompletableFuture().isDone());
+        List<ParseInfoDto> parseInfoDtoList = user.getTasks().stream().map(ParseInfoDto::to).collect(Collectors.toList());
+        model.addAttribute("tasks", parseInfoDtoList);
         return "page";
     }
 
@@ -85,10 +90,16 @@ public class AlbumVkController {
         ParseService parseService = manager.getParseServiceByName(site);
         String upload_url = vkService.getUploadUrl(user, group_id, album_id);
         int count = parseService.getPageCount(getDocumentPageFromSite(url));
-        CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> {
+        AtomicInteger pageParsedCount = new AtomicInteger(0);
+        Path folder = Paths.get(group_id, album_id);
+        Files.createDirectories(folder);
+        CompletableFuture<?> future = CompletableFuture.runAsync(() -> {
             Disposable disposable = Flowable.range(1, count)
-                    .map(pageNumber -> parseService.getDocumentPageByNumber(url, pageNumber))
-                    .map(parseService::getProducts).subscribe(list -> {
+                    .map(pageNumber -> {
+                        pageParsedCount.set(pageNumber);
+                        return parseService.getDocumentPageByNumber(url, pageNumber);
+                    })
+                    .map(parseService::getProducts).subscribeOn(Schedulers.computation()).subscribe(list -> {
                         for (Product product: list) {
                             vkService.savePhotoInAlbum(SavePhoto.builder()
                                     .album_id(album_id)
@@ -96,12 +107,24 @@ public class AlbumVkController {
                                     .product(product)
                                     .upload_url(upload_url)
                                     .group_id(group_id)
+                                    .folder(folder)
                                     .build());
                         }
                     });
-            return disposable.isDisposed();
+            try {
+                Files.delete(folder);
+            } catch (IOException ignored) {
+                // ignored
+            }
         });
-        user.getTasks().add(future);
+        ParseInfo parseInfo = ParseInfo.builder()
+                .completableFuture(future)
+                .album_id(album_id)
+                .url(url)
+                .count(pageParsedCount)
+                .allPagesCount(count)
+                .build();
+        user.getTasks().add(parseInfo);
         return "redirect:" + "/vk/group/" + group_id + "/album/" + album_id + "/parse";
     }
 }

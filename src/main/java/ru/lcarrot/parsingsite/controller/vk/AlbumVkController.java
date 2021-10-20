@@ -78,16 +78,6 @@ public class AlbumVkController {
     public String getSiteForParsing(@PathVariable String album_id, @PathVariable String group_id, Model model) {
         model.addAttribute("services", manager.getAllServices());
         User user = userService.getUser();
-        user.getTasks().forEach(task -> {
-                    if (task.getCompletableFuture().isDone()) {
-                        try {
-                            Files.delete(task.getFolder());
-                        } catch (IOException ignored) {
-                            //ignored
-                        }
-                    }
-                }
-        );
         user.getTasks().removeIf(x -> x.getCompletableFuture().isDone());
         List<ParseInfoDto> parseInfoDtoList = user.getTasks().stream().map(ParseInfoDto::to).collect(Collectors.toList());
         model.addAttribute("tasks", parseInfoDtoList);
@@ -117,7 +107,6 @@ public class AlbumVkController {
                                     .product(product)
                                     .upload_url(upload_url)
                                     .group_id(group_id)
-                                    .folder(folder)
                                     .build());
                         }
                     });

@@ -1,20 +1,17 @@
 package ru.lcarrot.parsingsite.repository;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.squareup.okhttp.*;
+import com.squareup.okhttp.RequestBody;
 import lombok.SneakyThrows;
-import org.springframework.core.convert.ConversionService;
 import org.springframework.stereotype.Component;
 import ru.lcarrot.parsingsite.dto.SavePhoto;
 import ru.lcarrot.parsingsite.dto.UploadToServer;
 import ru.lcarrot.parsingsite.entity.Album;
 import ru.lcarrot.parsingsite.entity.User;
-import ru.lcarrot.parsingsite.util.JsonUtils;
 import ru.lcarrot.parsingsite.util.VkApiUtils;
 
 import java.io.File;
 import java.net.URL;
-import java.util.concurrent.ThreadLocalRandom;
 
 @Component
 public class VkJsonRepository {

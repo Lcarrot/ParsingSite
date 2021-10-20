@@ -117,7 +117,6 @@ public class AlbumVkController {
                 .url(url)
                 .count(pageParsedCount)
                 .allPagesCount(count)
-                .folder(folder)
                 .build();
         user.getTasks().add(parseInfo);
         return "redirect:" + "/vk/group/" + group_id + "/album/" + album_id + "/parse";

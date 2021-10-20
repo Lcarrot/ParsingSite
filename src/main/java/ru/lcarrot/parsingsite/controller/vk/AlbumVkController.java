@@ -103,6 +103,7 @@ public class AlbumVkController {
                         for (Product product : list) {
                             vkService.savePhotoInAlbum(SavePhoto.builder()
                                     .album_id(album_id)
+                                    .folder(folder)
                                     .user_access_token(user.getAccess_token())
                                     .product(product)
                                     .upload_url(upload_url)

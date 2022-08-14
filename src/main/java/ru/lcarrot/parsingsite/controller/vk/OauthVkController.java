@@ -21,11 +21,8 @@ public class OauthVkController {
     }
 
     @GetMapping("/signIn")
-    public String authorize(Optional<String> code, HttpSession session) throws IOException {
-        if (code.isPresent()) {
-            User user = vkService.login(code.get());
-            session.setAttribute("user", user);
-        }
+    public String authorize(Optional<String> code) {
+        code.ifPresent(vkService::login);
         return "redirect:/vk/groups";
     }
 }

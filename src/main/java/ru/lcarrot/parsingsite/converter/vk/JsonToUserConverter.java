@@ -1,4 +1,4 @@
-package ru.lcarrot.parsingsite.converters;
+package ru.lcarrot.parsingsite.converter.vk;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.core.convert.converter.Converter;

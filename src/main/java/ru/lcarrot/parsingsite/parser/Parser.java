@@ -1,11 +1,11 @@
-package ru.lcarrot.parsingsite.service.parse;
+package ru.lcarrot.parsingsite.parser;
 
 import org.jsoup.nodes.Document;
 import ru.lcarrot.parsingsite.entity.Product;
 
 import java.util.List;
 
-public interface ParseService {
+public interface Parser {
 
     /*
      должен возвращать название сайта

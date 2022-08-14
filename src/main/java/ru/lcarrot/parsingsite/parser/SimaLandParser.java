@@ -1,32 +1,34 @@
-package ru.lcarrot.parsingsite.service.parse;
+package ru.lcarrot.parsingsite.parser;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import lombok.SneakyThrows;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import ru.lcarrot.parsingsite.converters.SimaLandHtmlToProductConverter;
+import ru.lcarrot.parsingsite.converter.SimaLandProductConverter;
 import ru.lcarrot.parsingsite.entity.Product;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static ru.lcarrot.parsingsite.util.HtmParseUtils.getDocumentPageFromSite;
 
 @Component
-public class SimaLandService implements ParseService {
+public class SimaLandParser implements Parser {
 
-    private final SimaLandHtmlToProductConverter productConverter;
+    private final SimaLandProductConverter productConverter;
 
+    @Value("${simaland.service.name}")
+    private String serviceName;
 
-
-    public SimaLandService(SimaLandHtmlToProductConverter productConverter) {
+    public SimaLandParser(SimaLandProductConverter productConverter) {
         this.productConverter = productConverter;
     }
 
     @Override
     public String getSiteName() {
-        return "simaland";
+        return serviceName;
     }
 
     @Override

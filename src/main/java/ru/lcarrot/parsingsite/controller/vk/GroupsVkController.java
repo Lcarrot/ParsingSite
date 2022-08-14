@@ -1,5 +1,7 @@
 package ru.lcarrot.parsingsite.controller.vk;
 
+import java.util.List;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,9 +11,6 @@ import ru.lcarrot.parsingsite.entity.Group;
 import ru.lcarrot.parsingsite.entity.User;
 import ru.lcarrot.parsingsite.service.UserService;
 import ru.lcarrot.parsingsite.service.VkService;
-
-import java.io.IOException;
-import java.util.List;
 
 @Controller
 @RequestMapping("/vk/groups")
@@ -26,16 +25,13 @@ public class GroupsVkController {
     }
 
     @GetMapping
-    public String groups(Model model) throws IOException {
-        List<Group> nodes;
-        User user = userService.getUser();
-        nodes = vkService.getGroups(user);
-        user.setGroupList(nodes);
+    public String groups(Model model) {
+        User user = userService.getUser().get();
+        List<Group> nodes = vkService.getGroups(user);
         model.addAttribute("nodes", nodes);
         return "groups";
     }
 
-    // TODO: 06.09.2021 создать страницу для выбора
     @GetMapping("{group_id}")
     public String createOrChooseAlbum(@PathVariable("group_id") String group_id, Model model) {
         model.addAttribute("group_id", group_id);
